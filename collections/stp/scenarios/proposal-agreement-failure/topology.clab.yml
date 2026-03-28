@@ -1,0 +1,48 @@
+---
+name: stp-proposal-agreement-failure
+
+mgmt:
+  network: clab-mgmt-stp-proposal-agreement-failure
+  ipv4-subnet: 172.30.86.0/24
+  ipv6-subnet: 3fff:172:30:86::/64
+
+topology:
+  nodes:
+    sw1:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw1.cfg
+      mgmt-ipv4: 172.30.86.11
+      mgmt-ipv6: 3fff:172:30:86::11
+
+    sw2:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw2.cfg
+      mgmt-ipv4: 172.30.86.12
+      mgmt-ipv6: 3fff:172:30:86::12
+
+    relay:
+      kind: linux
+      image: nicolaka/netshoot:latest
+      mgmt-ipv4: 172.30.86.30
+      mgmt-ipv6: 3fff:172:30:86::30
+      cmd: sh -c "sleep infinity"
+
+    injector:
+      kind: linux
+      image: nicolaka/netshoot:latest
+      mgmt-ipv4: 172.30.86.40
+      mgmt-ipv6: 3fff:172:30:86::40
+      cmd: sh -c "sleep infinity"
+
+  links:
+    - endpoints: ["sw1:Ethernet0/1", "relay:eth1"]
+    - endpoints: ["relay:eth2", "sw2:Ethernet0/1"]
+    - endpoints: ["relay:eth3", "injector:eth1"]
