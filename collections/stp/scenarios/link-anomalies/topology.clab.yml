@@ -1,0 +1,52 @@
+---
+name: stp-link-anomalies
+
+mgmt:
+  network: clab-mgmt-stp-link-anomalies
+  ipv4-subnet: 172.30.74.0/24
+  ipv6-subnet: 3fff:172:30:74::/64
+
+topology:
+  nodes:
+    sw1:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw1.cfg
+      mgmt-ipv4: 172.30.74.11
+      mgmt-ipv6: 3fff:172:30:74::11
+
+    sw2:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw2.cfg
+      mgmt-ipv4: 172.30.74.12
+      mgmt-ipv6: 3fff:172:30:74::12
+
+    fault:
+      kind: linux
+      image: nicolaka/netshoot:latest
+      mgmt-ipv4: 172.30.74.30
+      mgmt-ipv6: 3fff:172:30:74::30
+      cmd: sh -c "sleep infinity"
+      exec:
+        - ip link add br0 type bridge
+        - ip link set eth1 up
+        - ip link set eth2 up
+        - ip link set eth3 up
+        - ip link set eth4 up
+        - ip link set br0 up
+        - ip link set eth1 master br0
+        - ip link set eth2 master br0
+
+  links:
+    - endpoints: ["sw1:Ethernet0/1", "sw2:Ethernet0/1"]
+    - endpoints: ["sw1:Ethernet0/2", "fault:eth1"]
+    - endpoints: ["fault:eth2", "sw2:Ethernet0/2"]
+    - endpoints: ["sw2:Ethernet1/0", "fault:eth3"]
+    - endpoints: ["sw2:Ethernet1/1", "fault:eth4"]
