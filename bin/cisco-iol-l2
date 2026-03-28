@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TOPOLOGY="legacy/cisco-iol-l2/topology.clab.yml"
+TOPOLOGY="local/legacy/cisco-iol-l2/topology.clab.yml"
 LAB_NAME="cisco-iol-l2"
 NODE_NAME="clab-cisco-iol-l2-gns3-iouvm"
 GRAPH_URL="http://localhost:50080"
@@ -23,6 +23,7 @@ Commands:
   help      Show this help
 
 Notes:
+  - This wrapper uses the local-only topology under local/legacy/.
   - In the IOS console, use "write memory" to persist config to NVRAM.
   - Detach from the console without stopping the switch using Ctrl-p Ctrl-q.
   - Do not use Ctrl-c in the attached console; that stops the container process.
@@ -33,15 +34,19 @@ cmd="${1:-up}"
 
 case "$cmd" in
   up)
+    [ -f "$ROOT_DIR/$TOPOLOGY" ] || { echo "Missing local topology: $ROOT_DIR/$TOPOLOGY" >&2; exit 1; }
     exec "$ROOT_DIR/bin/clab" deploy -t "$TOPOLOGY"
     ;;
   down)
+    [ -f "$ROOT_DIR/$TOPOLOGY" ] || { echo "Missing local topology: $ROOT_DIR/$TOPOLOGY" >&2; exit 1; }
     exec "$ROOT_DIR/bin/clab" destroy -t "$TOPOLOGY"
     ;;
   reset)
+    [ -f "$ROOT_DIR/$TOPOLOGY" ] || { echo "Missing local topology: $ROOT_DIR/$TOPOLOGY" >&2; exit 1; }
     exec "$ROOT_DIR/bin/clab" destroy -t "$TOPOLOGY" --cleanup
     ;;
   graph)
+    [ -f "$ROOT_DIR/$TOPOLOGY" ] || { echo "Missing local topology: $ROOT_DIR/$TOPOLOGY" >&2; exit 1; }
     exec "$ROOT_DIR/bin/clab" graph -t "$TOPOLOGY"
     ;;
   open)

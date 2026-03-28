@@ -2,6 +2,33 @@
 
 Cisco-IOL-based spanning-tree labs and fault scenarios for learning, experimentation, and packet capture.
 
+## Prerequisites
+
+To run these scenarios successfully, make sure you have:
+
+- Docker installed and running.
+- Containerlab installed natively, or the bundled `bin/clab` wrapper available as the fallback runtime.
+- `python3` installed for the summary and decode helpers used by the run workflows.
+- `screen` installed if you want to use `bin/stp run <scenario>`.
+- A compatible Cisco IOL image available locally as `vrnetlab/cisco_iol:L2-15.1a`, or exported through `STP_SWITCH_IMAGE`.
+- Permission to run privileged containers and create the network plumbing that containerlab needs.
+
+If you have not prepared the Cisco image yet, follow [docs/byoi-cisco-iol.md](/Users/sruthiki/containerlab/docs/byoi-cisco-iol.md) first.
+
+## Baseline Flow
+
+Use the baseline scenario first to confirm the runtime is working:
+
+- `bin/stp up baseline`
+- `bin/stp status baseline`
+- `bin/stp down baseline`
+
+Once the baseline lab works, move on to the fault scenarios with:
+
+- `bin/stp list`
+- `bin/stp info <scenario>`
+- `bin/stp run <scenario> [args...]`
+
 ## Commands
 
 - `bin/stp list`

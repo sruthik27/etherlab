@@ -14,19 +14,34 @@ The repo is intentionally collection-oriented rather than protocol-specific. STP
 - `collections/stp/`: STP collection index, scenarios, and workflows.
 - `bin/`: command entrypoints such as `bin/netlab`, `bin/stp`, and `bin/clab`.
 - `docs/`: setup and bring-your-own-image guidance.
-- `legacy/`: preserved older examples that are not part of the primary collection UX.
-- `local/`: ignored local-only assets, captures, logs, lab state, and proprietary image inputs.
+- `local/`: ignored local-only assets, captures, logs, lab state, proprietary image inputs, and any older scratch labs you want to keep around privately.
+
+## Prerequisites
+
+Before running the current STP collection, make sure you have:
+
+- Docker installed and running. On macOS that usually means Docker Desktop; on Linux Docker Engine is fine.
+- Containerlab available either natively on the host or through the bundled `bin/clab` wrapper.
+- `python3` available for the STP summary and decode helpers.
+- `screen` installed if you want to use `bin/stp run <scenario>` for longer fault-injection workflows.
+- A compatible Cisco IOL image available locally. See [docs/byoi-cisco-iol.md](/Users/sruthiki/containerlab/docs/byoi-cisco-iol.md).
+- Enough privileges for privileged containers and network namespace manipulation, which containerlab requires.
 
 ## Quick Start
 
-1. Review the Cisco BYOI notes in [docs/byoi-cisco-iol.md](/Users/sruthiki/containerlab/docs/byoi-cisco-iol.md).
-2. List available collections:
+1. Review the Cisco BYOI notes in [docs/byoi-cisco-iol.md](/Users/sruthiki/containerlab/docs/byoi-cisco-iol.md) and make sure the expected local image tag exists.
+2. Confirm Docker is running and that either `containerlab` or `bin/clab` is available.
+3. List available collections:
    - `bin/netlab collections`
-3. List STP scenarios:
+4. List STP scenarios:
    - `bin/netlab stp list`
-4. Bring up the baseline STP lab:
+5. Bring up the baseline STP lab:
    - `bin/stp up baseline`
-5. Run a fault scenario in `screen`:
+6. Check the baseline lab status:
+   - `bin/stp status baseline`
+7. Tear the baseline lab down when finished:
+   - `bin/stp down baseline`
+8. Run a fault scenario in `screen` when you want captures and parsed output:
    - `bin/stp run rogue-root`
 
 ## Commands
@@ -45,6 +60,7 @@ The repo is intentionally collection-oriented rather than protocol-specific. STP
 - Scenario artifacts go to `local/artifacts/stp/<scenario>/`.
 - Containerlab lab-state directories default to `local/state/clab/` via `CLAB_LABDIR_BASE`.
 - `collections/` is the public source of truth. The old per-scenario `bin/stp-*` commands remain as thin compatibility wrappers around `bin/stp`.
+- Older private experiments should live under `local/legacy/` if you want to keep them without publishing them.
 - `notify_when_done` is optional. If it exists in your shell setup, STP runs will use it; otherwise the command still launches and prints the `screen` session and log path.
 
 ## Public Release Notes
