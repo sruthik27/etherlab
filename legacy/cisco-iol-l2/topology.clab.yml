@@ -1,0 +1,37 @@
+---
+name: cisco-iol-l2
+
+mgmt:
+  network: clab-mgmt
+  ipv4-subnet: 172.30.50.0/24
+  ipv6-subnet: 3fff:172:30:50::/64
+
+topology:
+  nodes:
+    gns3-iouvm:
+      kind: cisco_iol
+      image: vrnetlab/cisco_iol:L2-15.1a
+      type: l2
+      startup-config: sw1.partial.txt
+
+    h1:
+      kind: linux
+      image: alpine:latest
+      cmd: ash -c "sleep infinity"
+      exec:
+        - ip link set eth1 up
+        - ip addr add 10.10.10.10/24 dev eth1
+        - ip route add 10.20.20.0/24 via 10.10.10.1 dev eth1
+
+    h2:
+      kind: linux
+      image: alpine:latest
+      cmd: ash -c "sleep infinity"
+      exec:
+        - ip link set eth1 up
+        - ip addr add 10.20.20.20/24 dev eth1
+        - ip route add 10.10.10.0/24 via 10.20.20.1 dev eth1
+
+  links:
+    - endpoints: ["gns3-iouvm:Ethernet0/1", "h1:eth1"]
+    - endpoints: ["gns3-iouvm:Ethernet0/2", "h2:eth1"]

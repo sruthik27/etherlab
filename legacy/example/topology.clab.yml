@@ -1,0 +1,34 @@
+---
+---
+# 2-Router FRRouting (FRR) Lab — real router CLI with vtysh
+#
+# Deploy:  clab deploy  -t legacy/example/topology.clab.yml
+# Destroy: clab destroy -t legacy/example/topology.clab.yml
+#
+# Access router CLI:
+#   docker exec -it clab-example-frr1 vtysh
+#   docker exec -it clab-example-frr2 vtysh
+
+name: example
+
+mgmt:
+  network: clab-mgmt
+  ipv4-subnet: 172.30.30.0/24
+  ipv6-subnet: 3fff:172:30:30::/64
+
+topology:
+  nodes:
+    frr1:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - frr1_daemons:/etc/frr/daemons
+
+    frr2:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - frr2_daemons:/etc/frr/daemons
+
+  links:
+    - endpoints: ["frr1:eth1", "frr2:eth1"]

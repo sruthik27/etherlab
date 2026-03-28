@@ -1,0 +1,15 @@
+.DS_Store
+local/
+**/clab-*
+**/NETMAP
+**/iouyap.ini
+**/nvram_*
+**/boot_config.txt
+**/authorized_keys
+**/ansible-inventory.yml
+**/nornir-simple-inventory.yml
+**/topology-data.json
+**/graph/
+**/*.pcap
+**/*-summary.json
+**/*-summary.txt
