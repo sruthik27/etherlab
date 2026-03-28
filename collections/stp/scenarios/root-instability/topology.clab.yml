@@ -1,0 +1,44 @@
+---
+name: stp-root-instability
+
+mgmt:
+  network: clab-mgmt-stp-root-instability
+  ipv4-subnet: 172.30.70.0/24
+  ipv6-subnet: 3fff:172:30:70::/64
+
+topology:
+  nodes:
+    sw1:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw1.cfg
+      mgmt-ipv4: 172.30.70.11
+      mgmt-ipv6: 3fff:172:30:70::11
+
+    sw2:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw2.cfg
+      mgmt-ipv4: 172.30.70.12
+      mgmt-ipv6: 3fff:172:30:70::12
+
+    sw3:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw3.cfg
+      mgmt-ipv4: 172.30.70.13
+      mgmt-ipv6: 3fff:172:30:70::13
+
+  links:
+    - endpoints: ["sw1:Ethernet0/1", "sw2:Ethernet0/1"]
+    - endpoints: ["sw1:Ethernet0/2", "sw3:Ethernet0/1"]
+    - endpoints: ["sw2:Ethernet0/2", "sw3:Ethernet0/2"]
