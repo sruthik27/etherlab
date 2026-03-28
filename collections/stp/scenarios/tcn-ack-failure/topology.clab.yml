@@ -1,0 +1,56 @@
+---
+name: stp-tcn-ack-failure
+
+mgmt:
+  network: clab-mgmt-stp-tcn-ack-failure
+  ipv4-subnet: 172.30.88.0/24
+  ipv6-subnet: 3fff:172:30:88::/64
+
+topology:
+  nodes:
+    sw1:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw1.cfg
+      mgmt-ipv4: 172.30.88.11
+      mgmt-ipv6: 3fff:172:30:88::11
+
+    sw2:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw2.cfg
+      mgmt-ipv4: 172.30.88.12
+      mgmt-ipv6: 3fff:172:30:88::12
+
+    relay:
+      kind: linux
+      image: nicolaka/netshoot:latest
+      mgmt-ipv4: 172.30.88.30
+      mgmt-ipv6: 3fff:172:30:88::30
+      cmd: sh -c "sleep infinity"
+
+    access-relay:
+      kind: linux
+      image: nicolaka/netshoot:latest
+      mgmt-ipv4: 172.30.88.31
+      mgmt-ipv6: 3fff:172:30:88::31
+      cmd: sh -c "sleep infinity"
+
+    host:
+      kind: linux
+      image: nicolaka/netshoot:latest
+      mgmt-ipv4: 172.30.88.40
+      mgmt-ipv6: 3fff:172:30:88::40
+      cmd: sh -c "sleep infinity"
+
+  links:
+    - endpoints: ["sw1:Ethernet0/1", "relay:eth1"]
+    - endpoints: ["relay:eth2", "sw2:Ethernet0/1"]
+    - endpoints: ["sw2:Ethernet0/2", "access-relay:eth1"]
+    - endpoints: ["access-relay:eth2", "host:eth1"]
