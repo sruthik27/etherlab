@@ -1,0 +1,55 @@
+---
+name: stp-baseline
+
+mgmt:
+  network: clab-mgmt-stp-baseline
+  ipv4-subnet: 172.30.60.0/24
+  ipv6-subnet: 3fff:172:30:60::/64
+
+topology:
+  nodes:
+    sw1:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw1.cfg
+      mgmt-ipv4: 172.30.60.11
+      mgmt-ipv6: 3fff:172:30:60::11
+
+    sw2:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw2.cfg
+      mgmt-ipv4: 172.30.60.12
+      mgmt-ipv6: 3fff:172:30:60::12
+
+    h1:
+      kind: linux
+      image: alpine:latest
+      mgmt-ipv4: 172.30.60.21
+      mgmt-ipv6: 3fff:172:30:60::21
+      cmd: ash -c "sleep infinity"
+      exec:
+        - ip link set eth1 up
+        - ip addr add 10.10.10.11/24 dev eth1
+
+    h2:
+      kind: linux
+      image: alpine:latest
+      mgmt-ipv4: 172.30.60.22
+      mgmt-ipv6: 3fff:172:30:60::22
+      cmd: ash -c "sleep infinity"
+      exec:
+        - ip link set eth1 up
+        - ip addr add 10.10.10.12/24 dev eth1
+
+  links:
+    - endpoints: ["sw1:Ethernet0/1", "h1:eth1"]
+    - endpoints: ["sw2:Ethernet0/1", "h2:eth1"]
+    - endpoints: ["sw1:Ethernet0/2", "sw2:Ethernet0/2"]
+    - endpoints: ["sw1:Ethernet0/3", "sw2:Ethernet0/3"]

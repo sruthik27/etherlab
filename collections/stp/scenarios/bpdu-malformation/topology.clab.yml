@@ -1,0 +1,37 @@
+---
+name: stp-bpdu-malformation
+
+mgmt:
+  network: clab-mgmt-stp-bpdu-malformation
+  ipv4-subnet: 172.30.89.0/24
+  ipv6-subnet: 3fff:172:30:89::/64
+
+topology:
+  nodes:
+    sw1:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw1.cfg
+      mgmt-ipv4: 172.30.89.11
+      mgmt-ipv6: 3fff:172:30:89::11
+
+    relay:
+      kind: linux
+      image: nicolaka/netshoot:latest
+      mgmt-ipv4: 172.30.89.30
+      mgmt-ipv6: 3fff:172:30:89::30
+      cmd: sh -c "sleep infinity"
+
+    injector:
+      kind: linux
+      image: nicolaka/netshoot:latest
+      mgmt-ipv4: 172.30.89.40
+      mgmt-ipv6: 3fff:172:30:89::40
+      cmd: sh -c "sleep infinity"
+
+  links:
+    - endpoints: ["sw1:Ethernet0/1", "relay:eth1"]
+    - endpoints: ["relay:eth2", "injector:eth1"]

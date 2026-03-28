@@ -1,0 +1,40 @@
+---
+name: stp-bpdu-guard-violations
+
+mgmt:
+  network: clab-mgmt-stp-bpdu-guard-violations
+  ipv4-subnet: 172.30.85.0/24
+  ipv6-subnet: 3fff:172:30:85::/64
+
+topology:
+  nodes:
+    sw1:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw1.cfg
+      mgmt-ipv4: 172.30.85.11
+      mgmt-ipv6: 3fff:172:30:85::11
+
+    sw2:
+      kind: cisco_iol
+      image: ${STP_SWITCH_IMAGE:=vrnetlab/cisco_iol:L2-15.1a}
+      type: l2
+      env:
+        IOL_HOSTNAME: gns3-iouvm
+      startup-config: startup/sw2.cfg
+      mgmt-ipv4: 172.30.85.12
+      mgmt-ipv6: 3fff:172:30:85::12
+
+    relay:
+      kind: linux
+      image: nicolaka/netshoot:latest
+      mgmt-ipv4: 172.30.85.30
+      mgmt-ipv6: 3fff:172:30:85::30
+      cmd: sh -c "sleep infinity"
+
+  links:
+    - endpoints: ["sw1:Ethernet0/1", "relay:eth1"]
+    - endpoints: ["relay:eth2", "sw2:Ethernet0/1"]
