@@ -1,0 +1,59 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/bin/_stp_scenario_common.sh"
+
+RUNNER="$ROOT_DIR/collections/stp/workflows/phase2-batch.sh"
+
+usage() {
+  cat <<'EOF'
+Usage: bin/stp-phase2-batch [command]
+
+Commands:
+  run      Launch the full phase-2 STP batch in screen (default)
+  down     Tear down all phase-2 scenario labs
+  status   Show phase-2 screen sessions and latest screen logs
+  help     Show this help
+EOF
+}
+
+destroy_all() {
+  destroy_scenario_lab "$(stp_topology_path root-misconfiguration)"
+  destroy_scenario_lab "$(stp_topology_path timer-misconfigurations)"
+  destroy_scenario_lab "$(stp_topology_path path-cost-conflicts)"
+  destroy_scenario_lab "$(stp_topology_path port-stuck-nonforwarding)"
+  destroy_scenario_lab "$(stp_topology_path version-mismatch)"
+  destroy_scenario_lab "$(stp_topology_path bpdu-guard-violations)"
+}
+
+show_status() {
+  screen -ls 2>/dev/null | sed -n '1p;/stp-phase2-batch/p'
+  echo ""
+  echo "Latest screen logs:"
+  ls -1t "$SCREEN_LOG_DIR" 2>/dev/null | head -n 10 | sed "s#^#  $SCREEN_LOG_DIR/#"
+}
+
+cmd="${1:-run}"
+
+case "$cmd" in
+  run)
+    launch_scenario_run "stp-phase2-batch" "$RUNNER"
+    ;;
+  down)
+    destroy_all
+    ;;
+  status)
+    show_status
+    ;;
+  help|--help|-h)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $cmd" >&2
+    echo >&2
+    usage >&2
+    exit 1
+    ;;
+esac

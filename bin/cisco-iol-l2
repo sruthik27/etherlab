@@ -1,0 +1,73 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TOPOLOGY="legacy/cisco-iol-l2/topology.clab.yml"
+LAB_NAME="cisco-iol-l2"
+NODE_NAME="clab-cisco-iol-l2-gns3-iouvm"
+GRAPH_URL="http://localhost:50080"
+
+usage() {
+  cat <<'EOF'
+Usage: bin/cisco-iol-l2 [command]
+
+Commands:
+  up        Deploy the lab (default)
+  down      Stop the lab without cleanup so saved node state files remain
+  reset     Destroy the lab and remove generated runtime files
+  graph     Start the topology graph server
+  open      Open the topology graph in the browser
+  console   Attach to the Cisco IOL console
+  status    Show lab containers
+  help      Show this help
+
+Notes:
+  - In the IOS console, use "write memory" to persist config to NVRAM.
+  - Detach from the console without stopping the switch using Ctrl-p Ctrl-q.
+  - Do not use Ctrl-c in the attached console; that stops the container process.
+EOF
+}
+
+cmd="${1:-up}"
+
+case "$cmd" in
+  up)
+    exec "$ROOT_DIR/bin/clab" deploy -t "$TOPOLOGY"
+    ;;
+  down)
+    exec "$ROOT_DIR/bin/clab" destroy -t "$TOPOLOGY"
+    ;;
+  reset)
+    exec "$ROOT_DIR/bin/clab" destroy -t "$TOPOLOGY" --cleanup
+    ;;
+  graph)
+    exec "$ROOT_DIR/bin/clab" graph -t "$TOPOLOGY"
+    ;;
+  open)
+    exec open "$GRAPH_URL"
+    ;;
+  console)
+    if ! docker ps -a --format '{{.Names}}' | grep -qx "$NODE_NAME"; then
+      echo "The lab is not deployed. Start it with: bin/cisco-iol-l2"
+      exit 1
+    fi
+    if ! docker ps --format '{{.Names}}' | grep -qx "$NODE_NAME"; then
+      docker start "$NODE_NAME" >/dev/null
+    fi
+    echo "Detach without stopping the switch: Ctrl-p Ctrl-q"
+    exec docker attach "$NODE_NAME"
+    ;;
+  status)
+    docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}' | sed -n '1p;/cisco-iol-l2/p'
+    ;;
+  help|--help|-h)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $cmd" >&2
+    echo >&2
+    usage >&2
+    exit 1
+    ;;
+esac

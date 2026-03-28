@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/bin/_stp_scenario_common.sh"
+
+RUNNER="$ROOT_DIR/collections/stp/workflows/phase3-batch.sh"
+
+usage() {
+  cat <<'EOF'
+Usage: bin/stp-phase3-batch [command]
+
+Commands:
+  run      Launch the phase-3 scenario batch in screen (default)
+  help     Show this help
+EOF
+}
+
+cmd="${1:-run}"
+
+case "$cmd" in
+  run)
+    launch_scenario_run "stp-phase3-batch" "$RUNNER"
+    ;;
+  help|--help|-h)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $cmd" >&2
+    echo >&2
+    usage >&2
+    exit 1
+    ;;
+esac

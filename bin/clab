@@ -1,0 +1,207 @@
+#!/bin/bash
+#
+# clab — Containerlab wrapper for macOS (Docker Desktop)
+#
+# Runs containerlab inside a privileged Docker container using the
+# Docker-outside-of-Docker pattern. Your host Docker daemon is shared,
+# so lab containers appear in Docker Desktop UI.
+#
+# Usage:
+#   clab deploy -t collections/stp/scenarios/baseline/topology.clab.yml
+#   clab save   -t collections/stp/scenarios/baseline/topology.clab.yml
+#   clab destroy -t collections/stp/scenarios/baseline/topology.clab.yml
+#   clab inspect
+#   clab version
+#   clab graph -t collections/stp/scenarios/baseline/topology.clab.yml
+#   clab shell          — drop into an interactive containerlab shell
+#   clab update         — pull the latest containerlab image
+#   clab help           — show this help
+#
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Config
+CLAB_VERSION="${CLAB_VERSION:-0.74.1}"
+CLAB_IMAGE="ghcr.io/srl-labs/clab:${CLAB_VERSION}"
+CLAB_HOME="${CLAB_HOME:-$ROOT_DIR}"
+CLAB_LABDIR_BASE="${CLAB_LABDIR_BASE:-$ROOT_DIR/local/state/clab}"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+_banner() {
+  echo ""
+  echo -e "${CYAN}${BOLD}  ╔═══════════════════════════════════════╗${NC}"
+  echo -e "${CYAN}${BOLD}  ║       🔬 Containerlab on macOS       ║${NC}"
+  echo -e "${CYAN}${BOLD}  ║       Docker Desktop · DooD           ║${NC}"
+  echo -e "${CYAN}${BOLD}  ╚═══════════════════════════════════════╝${NC}"
+  echo ""
+}
+
+_check_docker() {
+  if ! docker info &>/dev/null; then
+    echo -e "${RED}✗ Docker Desktop is not running.${NC}"
+    echo -e "  Please start Docker Desktop and try again."
+    exit 1
+  fi
+}
+
+_ensure_image() {
+  if ! docker image inspect "$CLAB_IMAGE" &>/dev/null; then
+    echo -e "${YELLOW}⏳ Pulling containerlab image ${CLAB_IMAGE}...${NC}"
+    docker pull "$CLAB_IMAGE"
+    echo -e "${GREEN}✓ Image pulled successfully.${NC}"
+  fi
+}
+
+_docker_run_flags() {
+  local flags=(--rm -i --privileged)
+  if [[ -t 0 && -t 1 ]]; then
+    flags+=(-t)
+  fi
+  printf '%s\n' "${flags[@]}"
+}
+
+_run_clab() {
+  local run_flags=()
+  while IFS= read -r flag; do
+    run_flags+=("$flag")
+  done < <(_docker_run_flags)
+
+  docker run "${run_flags[@]}" \
+    --network host \
+    --pid host \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /run/docker/netns:/run/docker/netns \
+    -v /var/lib/docker:/var/lib/docker \
+    -e "HOME=$HOME" \
+    -e CLAB_LABDIR_BASE \
+    -e STP_SWITCH_IMAGE \
+    -e STP_BPDU_INJECTOR_IMAGE \
+    -v "$CLAB_HOME":"$CLAB_HOME" \
+    -w "$CLAB_HOME" \
+    "$CLAB_IMAGE" \
+    containerlab "$@"
+}
+
+_run_graph() {
+  local GRAPH_PORT="${CLAB_GRAPH_PORT:-50080}"
+  echo -e "${BLUE}🌐 Starting topology graph on ${BOLD}http://localhost:${GRAPH_PORT}${NC}"
+  echo -e "   Press ${BOLD}Ctrl+C${NC} to stop the server."
+  echo ""
+
+  ( sleep 2 && open "http://localhost:${GRAPH_PORT}" ) &
+
+  local run_flags=()
+  while IFS= read -r flag; do
+    run_flags+=("$flag")
+  done < <(_docker_run_flags)
+
+  docker run "${run_flags[@]}" \
+    --pid host \
+    -p "${GRAPH_PORT}:50080" \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /run/docker/netns:/run/docker/netns \
+    -v /var/lib/docker:/var/lib/docker \
+    -e "HOME=$HOME" \
+    -e CLAB_LABDIR_BASE \
+    -e STP_SWITCH_IMAGE \
+    -e STP_BPDU_INJECTOR_IMAGE \
+    -v "$CLAB_HOME":"$CLAB_HOME" \
+    -w "$CLAB_HOME" \
+    "$CLAB_IMAGE" \
+    containerlab graph --srv ":50080" "${@}"
+}
+
+_run_shell() {
+  echo -e "${BLUE}🐚 Opening containerlab shell...${NC}"
+  echo -e "   Type ${BOLD}exit${NC} to return to macOS."
+  echo ""
+  docker run --rm -it --privileged \
+    --network host \
+    --pid host \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /run/docker/netns:/run/docker/netns \
+    -v /var/lib/docker:/var/lib/docker \
+    -e "HOME=$HOME" \
+    -e CLAB_LABDIR_BASE \
+    -e STP_SWITCH_IMAGE \
+    -e STP_BPDU_INJECTOR_IMAGE \
+    -v "$CLAB_HOME":"$CLAB_HOME" \
+    -w "$CLAB_HOME" \
+    "$CLAB_IMAGE" \
+    bash
+}
+
+_show_help() {
+  _banner
+  echo -e "${BOLD}Usage:${NC} clab <command> [options]"
+  echo ""
+  echo -e "${BOLD}Lab Management:${NC}"
+  echo -e "  ${GREEN}deploy${NC}    -t <topology.yml>    Deploy a lab"
+  echo -e "  ${GREEN}destroy${NC}   -t <topology.yml>    Destroy a lab"
+  echo -e "  ${GREEN}inspect${NC}                        Show running labs"
+  echo -e "  ${GREEN}save${NC}      -t <topology.yml>    Save node configs"
+  echo -e "  ${GREEN}graph${NC}     -t <topology.yml>    Visualize topology (opens browser)"
+  echo ""
+  echo -e "${BOLD}Utility:${NC}"
+  echo -e "  ${GREEN}shell${NC}                          Interactive containerlab shell"
+  echo -e "  ${GREEN}version${NC}                        Show containerlab version"
+  echo -e "  ${GREEN}update${NC}                         Pull latest containerlab image"
+  echo -e "  ${GREEN}help${NC}                           Show this help message"
+  echo ""
+  echo -e "${BOLD}Data Locations:${NC}"
+  echo -e "  Workspace: ${CYAN}$CLAB_HOME${NC}"
+  echo -e "  Lab State: ${CYAN}$CLAB_LABDIR_BASE${NC}"
+  echo -e "  Image:     ${CYAN}$CLAB_IMAGE${NC}"
+  echo ""
+  echo -e "${BOLD}Workflow:${NC}"
+  echo -e "  1. ${YELLOW}clab deploy${NC}  -t collections/stp/scenarios/baseline/topology.clab.yml  # start lab"
+  echo -e "  2. ${YELLOW}clab save${NC}    -t collections/stp/scenarios/baseline/topology.clab.yml  # save configs"
+  echo -e "  3. ${YELLOW}clab destroy${NC} -t collections/stp/scenarios/baseline/topology.clab.yml  # tear down"
+  echo -e "  4. ${YELLOW}clab deploy${NC}  -t collections/stp/scenarios/baseline/topology.clab.yml  # resume (configs intact)"
+  echo ""
+  echo -e "${BOLD}Environment Variables:${NC}"
+  echo -e "  CLAB_VERSION      Override containerlab version (current: $CLAB_VERSION)"
+  echo -e "  CLAB_HOME         Override workspace directory   (current: $CLAB_HOME)"
+  echo -e "  CLAB_LABDIR_BASE  Override lab state directory   (current: $CLAB_LABDIR_BASE)"
+  echo -e "  CLAB_GRAPH_PORT   Override graph UI port          (default: 50080)"
+  echo ""
+}
+
+_update() {
+  echo -e "${YELLOW}⏳ Pulling latest containerlab image...${NC}"
+  docker pull "$CLAB_IMAGE"
+  echo -e "${GREEN}✓ Updated to ${CLAB_IMAGE}${NC}"
+}
+
+_check_docker
+
+case "${1:-help}" in
+  help|--help|-h)
+    _show_help
+    ;;
+  shell)
+    _ensure_image
+    _run_shell
+    ;;
+  update)
+    _update
+    ;;
+  graph)
+    _ensure_image
+    shift
+    _run_graph "$@"
+    ;;
+  *)
+    _ensure_image
+    _run_clab "$@"
+    ;;
+esac

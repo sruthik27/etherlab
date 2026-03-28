@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COLLECTIONS_DIR="$ROOT_DIR/collections"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  bin/netlab collections
+  bin/netlab <collection> [command] [args...]
+
+Examples:
+  bin/netlab collections
+  bin/netlab stp list
+  bin/netlab stp info rogue-root
+  bin/netlab stp up baseline
+EOF
+}
+
+list_collections() {
+  find "$COLLECTIONS_DIR" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort
+}
+
+case "${1:-help}" in
+  collections)
+    list_collections
+    ;;
+  help|--help|-h)
+    usage
+    ;;
+  *)
+    collection="$1"
+    shift || true
+    if [ -x "$ROOT_DIR/bin/$collection" ]; then
+      exec "$ROOT_DIR/bin/$collection" "$@"
+    fi
+
+    echo "Unknown collection: $collection" >&2
+    echo >&2
+    usage >&2
+    exit 1
+    ;;
+esac
