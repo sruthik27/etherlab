@@ -11,11 +11,12 @@ Each collection should own its own:
 
 ## Available Now
 
+- `lag`: EtherChannel baseline labs and mismatch or failure scenarios
 - `stp`: spanning-tree baseline labs and anomaly/fault scenarios
 
 ## Planned Directions
 
 - DHCP labs
 - DNS labs
-- LAG and switching labs
+- switching and edge-security labs
 - additional wired-networking experiments

@@ -6,11 +6,13 @@ The repo is intentionally collection-oriented rather than protocol-specific. STP
 
 ## Current Collections
 
+- `lag`: baseline EtherChannel labs plus member-failure and mismatch scenarios built around Cisco IOL.
 - `stp`: baseline spanning-tree labs, failure scenarios, and fault-capture workflows built around Cisco IOL.
 
 ## Repo Layout
 
 - `collections/`: public lab collections. This is the main source tree.
+- `collections/lag/`: LAG collection index and scenarios.
 - `collections/stp/`: STP collection index, scenarios, and workflows.
 - `bin/`: command entrypoints such as `bin/netlab`, `bin/stp`, and `bin/clab`.
 - `docs/`: setup and bring-your-own-image guidance.
@@ -35,19 +37,28 @@ Before running the current STP collection, make sure you have:
    - `bin/netlab collections`
 4. List STP scenarios:
    - `bin/netlab stp list`
-5. Bring up the baseline STP lab:
-   - `bin/stp up baseline`
-6. Check the baseline lab status:
-   - `bin/stp status baseline`
-7. Tear the baseline lab down when finished:
-   - `bin/stp down baseline`
-8. Run a fault scenario in `screen` when you want captures and parsed output:
+5. List LAG scenarios:
+   - `bin/netlab lag list`
+6. Bring up the baseline LAG lab:
+   - `bin/lag up baseline`
+7. Check the baseline LAG lab status:
+   - `bin/lag status baseline`
+8. Tear the baseline LAG lab down when finished:
+   - `bin/lag down baseline`
+9. Run a fault scenario in `screen` when you want captures and parsed output:
    - `bin/stp run rogue-root`
 
 ## Commands
 
 - `bin/netlab collections`: list available collections.
+- `bin/netlab lag list`: list LAG scenarios.
 - `bin/netlab stp list`: list STP scenarios.
+- `bin/lag info <scenario>`: print the scenario README.
+- `bin/lag up <scenario>`: deploy a scenario topology.
+- `bin/lag down <scenario>`: destroy a scenario topology.
+- `bin/lag run <scenario>`: launch the scenario run in `screen`.
+- `bin/lag status <scenario>`: show containers and recent artifacts.
+- `bin/lag graph <scenario>`: open the topology graph via containerlab.
 - `bin/stp info <scenario>`: print the scenario README.
 - `bin/stp up <scenario>`: deploy a scenario topology.
 - `bin/stp down <scenario>`: destroy a scenario topology.
@@ -58,6 +69,7 @@ Before running the current STP collection, make sure you have:
 ## Runtime Behavior
 
 - Scenario artifacts go to `local/artifacts/stp/<scenario>/`.
+- LAG artifacts go to `local/artifacts/lag/<scenario>/`.
 - Containerlab lab-state directories default to `local/state/clab/` via `CLAB_LABDIR_BASE`.
 - `collections/` is the public source of truth. The old per-scenario `bin/stp-*` commands remain as thin compatibility wrappers around `bin/stp`.
 - Older private experiments should live under `local/legacy/` if you want to keep them without publishing them.
