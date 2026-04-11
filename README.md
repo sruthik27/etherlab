@@ -59,6 +59,17 @@ The unified `ethl` CLI handles all collections using a consistent syntax: `ethl 
 
 Traditional shims like `bin/stp` and `bin/lag` remain available as thin wrappers around the `ethl` core.
 
+### **Smart Context Detection**
+
+The `ethl` CLI is context-aware. If you run it from within a specific scenario directory, you can omit the collection and scenario names:
+
+```bash
+cd collections/stp/scenarios/rogue-root/
+../../../../bin/ethl run
+```
+
+This will automatically detect that you mean the `stp` collection and the `rogue-root` scenario.
+
 ## Runtime Behavior
 
 - Scenario artifacts go to `local/artifacts/stp/<scenario>/`.
