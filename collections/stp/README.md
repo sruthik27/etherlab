@@ -13,30 +13,30 @@ To run these scenarios successfully, make sure you have:
 - A compatible Cisco IOL image available locally as `vrnetlab/cisco_iol:L2-15.1a`, or exported through `STP_SWITCH_IMAGE`.
 - Permission to run privileged containers and create the network plumbing that containerlab needs.
 
-If you have not prepared the Cisco image yet, follow [docs/byoi-cisco-iol.md](/Users/sruthiki/containerlab/docs/byoi-cisco-iol.md) first.
+If you have not prepared the Cisco image yet, follow [docs/byoi-cisco-iol.md](../../docs/byoi-cisco-iol.md) first.
 
 ## Baseline Flow
 
 Use the baseline scenario first to confirm the runtime is working:
 
-- `bin/stp up baseline`
-- `bin/stp status baseline`
-- `bin/stp down baseline`
+- `bin/ethl stp up baseline`
+- `bin/ethl stp status baseline`
+- `bin/ethl stp down baseline`
 
 Once the baseline lab works, move on to the fault scenarios with:
 
-- `bin/stp list`
-- `bin/stp info <scenario>`
-- `bin/stp run <scenario> [args...]`
+- `bin/ethl stp list`
+- `bin/ethl stp info <scenario>`
+- `bin/ethl stp run <scenario> [args...]`
 
 ## Commands
 
-- `bin/stp list`
-- `bin/stp info <scenario>`
-- `bin/stp up <scenario>`
-- `bin/stp run <scenario> [args...]`
-- `bin/stp status <scenario>`
-- `bin/stp down <scenario>`
+- `bin/ethl stp list`
+- `bin/ethl stp info <scenario>`
+- `bin/ethl stp up <scenario>`
+- `bin/ethl stp run <scenario> [args...]`
+- `bin/ethl stp status <scenario>`
+- `bin/ethl stp down <scenario>`
 
 ## Artifacts
 

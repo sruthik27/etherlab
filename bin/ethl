@@ -1,0 +1,142 @@
+#!/bin/bash
+#
+# ethl — Unified Etherlab CLI (Context-Aware)
+#
+
+set -euo pipefail
+
+# Find relative root
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT_DIR/bin/lib/ethl_core.sh"
+
+usage() {
+  cat <<EOF
+Etherlab (ethl) — Unified Protocol Lab CLI
+
+Usage:
+  ethl <collection> <command> [scenario] [args...]
+  ethl <command> [args...] (Auto-detected if inside a scenario directory)
+
+Collections:
+$(find "$COLLECTIONS_DIR" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sed 's/^/  /')
+
+Commands:
+  list                 List available scenarios for a collection
+  info <scenario>      Show the scenario README
+  up <scenario>        Deploy a scenario topology
+  down <scenario>      Destroy a scenario topology
+  run <scenario> ...   Launch a scenario run inside screen
+  status <scenario>    Show lab containers and recent artifacts
+  graph <scenario>     Open the topology graph with containerlab
+  help                 Show this help
+
+Context-Aware Behavior:
+  If you are running ethl from inside a scenario directory, e.g.:
+    collections/stp/scenarios/rogue-root/
+  You can simply run:
+    ethl run
+    ethl status
+  And it will automatically detect that you mean 'stp' and 'rogue-root'.
+EOF
+}
+
+# --- Context Detection ---
+
+DETECTED_COL=""
+DETECTED_SCE=""
+
+# Extract context from PWD if possible
+# Path pattern: /collections/<collection>/scenarios/<scenario>
+if [[ "$(pwd)" =~ collections/([^/]+)/scenarios/([^/]+) ]]; then
+  DETECTED_COL="${BASH_REMATCH[1]}"
+  DETECTED_SCE="${BASH_REMATCH[2]}"
+fi
+
+# --- Argument Parsing ---
+
+FIRST_ARG="${1:-}"
+
+# If first arg is empty or help, show usage
+if [ -z "$FIRST_ARG" ] || [[ "$FIRST_ARG" =~ ^(--help|-h|help)$ ]]; then
+  usage
+  exit 0
+fi
+
+# Determine if the first argument is a collection or a command
+if [ -d "$COLLECTIONS_DIR/$FIRST_ARG" ]; then
+  # Explicit Collection Mode: ethl stp up baseline
+  COLLECTION="$FIRST_ARG"
+  CMD="${2:-list}"
+  SCENARIO="${3:-}"
+  EXTRA_ARGS=("${@:4}")
+else
+  # Context-Aware Mode: ethl up
+  if [ -n "$DETECTED_COL" ] && [ -n "$DETECTED_SCE" ]; then
+    COLLECTION="$DETECTED_COL"
+    CMD="$FIRST_ARG"
+    SCENARIO="$DETECTED_SCE"
+    EXTRA_ARGS=("${@:2}")
+  else
+    # Not inside a lab and didn't provide a collection
+    echo "Error: Unknown collection or command '$FIRST_ARG'" >&2
+    echo "Hint: Are you in a scenario directory? Or did you mean 'ethl <collection> <command>'?" >&2
+    exit 1
+  fi
+fi
+
+# --- Validation ---
+
+if [ ! -d "$COLLECTIONS_DIR/$COLLECTION" ]; then
+  echo "Error: Unknown collection '$COLLECTION'" >&2
+  exit 1
+fi
+
+require_scenario() {
+  if [ -z "$SCENARIO" ]; then
+    echo "Error: A scenario name is required." >&2
+    exit 1
+  fi
+  if [ ! -d "$(get_scenario_dir "$COLLECTION" "$SCENARIO")" ]; then
+    echo "Error: Unknown scenario '$SCENARIO' in collection '$COLLECTION'" >&2
+    exit 1
+  fi
+}
+
+# --- Routing ---
+
+case "$CMD" in
+  list)
+    find "$(get_scenarios_dir "$COLLECTION")" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort
+    ;;
+  info)
+    require_scenario
+    cat "$(get_readme_path "$COLLECTION" "$SCENARIO")"
+    ;;
+  up)
+    require_scenario
+    run_clab deploy -t "$(get_topology_path "$COLLECTION" "$SCENARIO")"
+    ;;
+  down)
+    require_scenario
+    run_clab destroy -t "$(get_topology_path "$COLLECTION" "$SCENARIO")"
+    ;;
+  run)
+    require_scenario
+    launch_run_in_screen "$COLLECTION" "$SCENARIO" "${EXTRA_ARGS[@]}"
+    ;;
+  status)
+    require_scenario
+    show_status "$COLLECTION" "$SCENARIO"
+    ;;
+  graph)
+    require_scenario
+    run_clab graph -t "$(get_topology_path "$COLLECTION" "$SCENARIO")"
+    ;;
+  help|--help|-h)
+    usage
+    ;;
+  *)
+    echo "Error: Unknown command '$CMD' for collection '$COLLECTION'" >&2
+    exit 1
+    ;;
+esac

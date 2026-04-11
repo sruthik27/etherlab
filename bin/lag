@@ -1,85 +1,8 @@
 #!/bin/bash
+#
+# lag — Etherlab LAG wrapper
+#
 
 set -euo pipefail
-
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$ROOT_DIR/bin/_lag_scenario_common.sh"
-
-usage() {
-  cat <<'EOF'
-Usage: bin/lag [command] [scenario] [args...]
-
-Commands:
-  list                 List available LAG scenarios
-  info <scenario>      Show the scenario README
-  up <scenario>        Deploy a scenario topology
-  down <scenario>      Destroy a scenario topology
-  run <scenario> ...   Launch a scenario run inside screen
-  status <scenario>    Show lab containers and recent artifacts
-  graph <scenario>     Open the topology graph with containerlab
-  help                 Show this help
-
-Examples:
-  bin/lag list
-  bin/lag info baseline
-  bin/lag up baseline
-  bin/lag run member-link-failure
-EOF
-}
-
-require_scenario() {
-  local scenario="${1:-}"
-  if [ -z "$scenario" ]; then
-    echo "A scenario name is required." >&2
-    usage >&2
-    exit 1
-  fi
-
-  if [ ! -d "$(lag_scenario_dir "$scenario")" ]; then
-    echo "Unknown LAG scenario: $scenario" >&2
-    exit 1
-  fi
-}
-
-cmd="${1:-list}"
-scenario="${2:-}"
-extra_args=("${@:3}")
-
-case "$cmd" in
-  list)
-    lag_list_scenarios
-    ;;
-  info)
-    require_scenario "$scenario"
-    cat "$(lag_readme_path "$scenario")"
-    ;;
-  up)
-    require_scenario "$scenario"
-    run_clab deploy -t "$(lag_topology_path "$scenario")"
-    ;;
-  down)
-    require_scenario "$scenario"
-    destroy_scenario_lab "$(lag_topology_path "$scenario")"
-    ;;
-  run)
-    require_scenario "$scenario"
-    launch_scenario_run "lag-${scenario}" "$(lag_run_path "$scenario")" "${extra_args[@]}"
-    ;;
-  status)
-    require_scenario "$scenario"
-    show_scenario_status "$(lag_lab_name "$scenario")" "$(lag_artifact_dir "$scenario")"
-    ;;
-  graph)
-    require_scenario "$scenario"
-    run_clab graph -t "$(lag_topology_path "$scenario")"
-    ;;
-  help|--help|-h)
-    usage
-    ;;
-  *)
-    echo "Unknown command: $cmd" >&2
-    echo >&2
-    usage >&2
-    exit 1
-    ;;
-esac
+exec "$ROOT_DIR/bin/ethl" lag "$@"

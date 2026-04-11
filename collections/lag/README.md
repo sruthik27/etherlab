@@ -13,30 +13,30 @@ To run these scenarios successfully, make sure you have:
 - A compatible Cisco IOL image available locally as `vrnetlab/cisco_iol:L2-15.1a`, or exported through `LAG_SWITCH_IMAGE`.
 - Permission to run privileged containers and create the network plumbing that containerlab needs.
 
-If you have not prepared the Cisco image yet, follow [docs/byoi-cisco-iol.md](/Users/sruthiki/containerlab/docs/byoi-cisco-iol.md) first.
+If you have not prepared the Cisco image yet, follow [docs/byoi-cisco-iol.md](../../docs/byoi-cisco-iol.md) first.
 
 ## Baseline Flow
 
 Use the baseline scenario first to confirm the runtime is working:
 
-- `bin/lag up baseline`
-- `bin/lag status baseline`
-- `bin/lag down baseline`
+- `bin/ethl lag up baseline`
+- `bin/ethl lag status baseline`
+- `bin/ethl lag down baseline`
 
 Once the baseline lab works, move on to the fault scenarios with:
 
-- `bin/lag list`
-- `bin/lag info <scenario>`
-- `bin/lag run <scenario>`
+- `bin/ethl lag list`
+- `bin/ethl lag info <scenario>`
+- `bin/ethl lag run <scenario>`
 
 ## Commands
 
-- `bin/lag list`
-- `bin/lag info <scenario>`
-- `bin/lag up <scenario>`
-- `bin/lag run <scenario>`
-- `bin/lag status <scenario>`
-- `bin/lag down <scenario>`
+- `bin/ethl lag list`
+- `bin/ethl lag info <scenario>`
+- `bin/ethl lag up <scenario>`
+- `bin/ethl lag run <scenario>`
+- `bin/ethl lag status <scenario>`
+- `bin/ethl lag down <scenario>`
 
 ## Artifacts
 
